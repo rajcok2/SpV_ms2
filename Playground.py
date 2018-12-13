@@ -294,14 +294,16 @@ class Playground(Tk):
 
     def check_buttons(self, event):
         if START_BUTTON_POSITION[0] <= event.x <= START_BUTTON_POSITION[2] and \
-                                START_BUTTON_POSITION[1] <= event.y <= START_BUTTON_POSITION[3]:\
+                                START_BUTTON_POSITION[1] <= event.y <= START_BUTTON_POSITION[3]:
                 self.start_tractor_move()
+
         elif RESTART_BUTTON_POSITION[0] <= event.x <= RESTART_BUTTON_POSITION[2] and \
-                                RESTART_BUTTON_POSITION[1] <= event.y <= RESTART_BUTTON_POSITION[3]:\
+                                RESTART_BUTTON_POSITION[1] <= event.y <= RESTART_BUTTON_POSITION[3]:
                 # self.restart()
             print('restart clilck')
 
     def click(self, event):
+        self.will_drag = False
         self.check_buttons(event)
         self.obj_id = event.widget.find_closest(event.x, event.y)[0]
         if self.obj_id:
@@ -312,6 +314,7 @@ class Playground(Tk):
         self.ex, self.ey = event.x, event.y
 
     def drag(self, event):
+        self.will_drag = True
         if self.obj_tag == ('collect' + str(self.obj_id)) or self.obj_tag == ('forward'+ str(self.obj_id)):
             self.playground.move(self.obj_tag, event.x - self.ex, event.y - self.ey)
             self.ex, self.ey = event.x, event.y
@@ -328,73 +331,74 @@ class Playground(Tk):
 
 
     def drop(self, event):
-        if self.obj_tag is not "current":
-            for i in range(len(self.commands_list)):
-                command_item = self.commands_list[i]
+        if self.will_drag is True:
+            if self.obj_tag is not "current":
+                for i in range(len(self.commands_list)):
+                    command_item = self.commands_list[i]
 
-                if command_item.box_coords[0] <= event.x <= command_item.box_coords[2] and \
-                                        command_item.box_coords[1] <= event.y <= command_item.box_coords[3]:
+                    if command_item.box_coords[0] <= event.x <= command_item.box_coords[2] and \
+                                            command_item.box_coords[1] <= event.y <= command_item.box_coords[3]:
 
-                    first_empty_position = self.check_command_in_list(i)
+                        first_empty_position = self.check_command_in_list(i)
 
-                    x, y = command_item.box_coords[0] + COMMAND_BOX_SIZE / 2,\
-                           command_item.box_coords[1] + COMMAND_BOX_SIZE / 2
+                        x, y = command_item.box_coords[0] + COMMAND_BOX_SIZE / 2,\
+                               command_item.box_coords[1] + COMMAND_BOX_SIZE / 2
 
-                    if first_empty_position is None:
-                        print(first_empty_position)
-                        return
+                        if first_empty_position is None:
+                            print(first_empty_position)
+                            return
 
-                    elif first_empty_position < i:
-                        condition = (0,i,1)
-                        step = [1, 0, 1]
-                        print("eeeeeee")
-                        if command_item.command_id:
-                            for j in range(first_empty_position, i):
-                                print("eoooooo")
-                                item = self.commands_list[j]
-                                item.command_id = self.commands_list[j+1].command_id
-                                item.command_tag = self.commands_list[j+1].command_tag
-                                item.command_type = self.commands_list[j+1].command_type
-                                if item.command_id:
-                                    self.playground.move(item.command_id, -COMMAND_BOX_SIZE, 0)
-                                self.commands_list[j+1].remove_command()
-                                self.playground.update()
+                        elif first_empty_position < i:
+                            condition = (0,i,1)
+                            step = [1, 0, 1]
+                            print("eeeeeee")
+                            if command_item.command_id:
+                                for j in range(first_empty_position, i):
+                                    print("eoooooo")
+                                    item = self.commands_list[j]
+                                    item.command_id = self.commands_list[j+1].command_id
+                                    item.command_tag = self.commands_list[j+1].command_tag
+                                    item.command_type = self.commands_list[j+1].command_type
+                                    if item.command_id:
+                                        self.playground.move(item.command_id, -COMMAND_BOX_SIZE, 0)
+                                    self.commands_list[j+1].remove_command()
+                                    self.playground.update()
 
-                    elif first_empty_position > i:
-                        condition = (len(self.commands_list) - 1, i, -1)
-                        step = [0, -1, -1]
+                        elif first_empty_position > i:
+                            condition = (len(self.commands_list) - 1, i, -1)
+                            step = [0, -1, -1]
 
-                        if command_item.command_id:
-                            for j in range(first_empty_position, i, -1):
-                                print(i-1, len(self.commands_list)-1)
-                                item = self.commands_list[j]
-                                item.command_id = self.commands_list[j-1].command_id
-                                item.command_tag = self.commands_list[j-1].command_tag
-                                item.command_type = self.commands_list[j-1].command_type
-                                if item.command_id:
-                                    self.playground.move(item.command_id, COMMAND_BOX_SIZE, 0)
-                                self.commands_list[j-1].remove_command()
-                                self.playground.update()
+                            if command_item.command_id:
+                                for j in range(first_empty_position, i, -1):
+                                    print(i-1, len(self.commands_list)-1)
+                                    item = self.commands_list[j]
+                                    item.command_id = self.commands_list[j-1].command_id
+                                    item.command_tag = self.commands_list[j-1].command_tag
+                                    item.command_type = self.commands_list[j-1].command_type
+                                    if item.command_id:
+                                        self.playground.move(item.command_id, COMMAND_BOX_SIZE, 0)
+                                    self.commands_list[j-1].remove_command()
+                                    self.playground.update()
 
-                    self.playground.coords(self.obj_id, x, y)
-                    self.print_commands_list()
+                        self.playground.coords(self.obj_id, x, y)
+                        self.print_commands_list()
 
-                    command_item.command_tag = self.obj_tag
-                    command_item.command_coords = (x, y)
-                    command_item.command_id = self.obj_id
+                        command_item.command_tag = self.obj_tag
+                        command_item.command_coords = (x, y)
+                        command_item.command_id = self.obj_id
 
-                    if self.obj_tag == ('collect' + str(self.obj_id)):
-                        command_item.command_type = 'collect'
-                        self.create_collect_button()
-                    if self.obj_tag == ('forward'+ str(self.obj_id)):
-                        command_item.command_type = 'forward'
-                        self.create_forward_button()
-                    self.print_commands_list()
-                    break
-                else:
-                    if not self.obj_tag == "current":
-                        self.playground.coords(self.obj_id, self.initial_coords[0],
-                                               self.initial_coords[1])
+                        if self.obj_tag == ('collect' + str(self.obj_id)):
+                            command_item.command_type = 'collect'
+                            self.create_collect_button()
+                        if self.obj_tag == ('forward'+ str(self.obj_id)):
+                            command_item.command_type = 'forward'
+                            self.create_forward_button()
+                        self.print_commands_list()
+                        break
+                    else:
+                        if not self.obj_tag == "current":
+                            self.playground.coords(self.obj_id, self.initial_coords[0],
+                                                   self.initial_coords[1])
 
     def image_scale(self):
         return
@@ -434,6 +438,8 @@ class Playground(Tk):
         if self.playground.coords('tractor')[0] == self.playground.coords('carrot')[0]:
             print('zdvihol si mrkvu')
             self.playground.delete('carrot')
+            self.playground.update()
+            sleep(0.5)
         else:
             print('nezdvihol si mrkvu')
 
