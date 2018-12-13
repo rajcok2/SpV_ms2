@@ -181,67 +181,6 @@ class Playground(Tk):
             array.append([item.command_id, item.command_type])
         print(array)
 
-    def sort_commands_in_box(self, event):
-        is_shift_needed = False
-        new_pos = None
-        old_pos = None
-        print("pred", self.obj_id)
-        self.print_commands_list()
-        print("................................")
-        for index in range(len(self.commands_list)):
-            item = self.commands_list[index]
-            if item.box_coords[0] <= event.x <= item.box_coords[2] and \
-                                    item.box_coords[1] <= event.y <= item.box_coords[3]:
-                new_pos = index
-                print("is shift neede? ", item.command_id, self.obj_id)
-                if item.command_id and item.command_id != self.obj_id:
-                    is_shift_needed = True
-
-            elif item.command_tag == self.obj_tag:
-                old_pos = index
-
-        if old_pos is not None:
-            dragged_item = copy(self.commands_list[old_pos])
-            self.commands_list[old_pos].remove_command()
-            print("dragged: " + dragged_item.command_type)
-
-            print((old_pos != new_pos), is_shift_needed)
-            is_shift_needed = True
-            if (old_pos != new_pos) and is_shift_needed:
-                print("eeeeeeeeeeeeeeeeeeeeeeeee", new_pos+1)
-                for index in range(len(self.commands_list)-1, new_pos+1, -1):
-                    item = self.commands_list[index]
-                    item.command_id = self.commands_list[index - 1].command_id
-                    item.command_tag = self.commands_list[index-1].command_tag
-                    item.command_type = self.commands_list[index-1].command_type
-                    self.playground.update()
-                    if item.command_id:
-                        self.playground.move(item.command_id, -COMMAND_BOX_SIZE, 0)
-                        self.playground.update()
-
-            self.commands_list[new_pos].command_tag = dragged_item.command_tag
-            self.commands_list[new_pos].command_type = dragged_item.command_type
-
-        # if old_pos and (old_pos != new_pos):
-        #     self.commands_list[new_pos].command_tag, self.commands_list[old_pos].command_tag = \
-        #         self.commands_list[old_pos].command_tag, self.commands_list[new_pos].command_tag
-        #
-        #     self.commands_list[new_pos].command_type, self.commands_list[old_pos].command_type = \
-        #         self.commands_list[old_pos].command_type, self.commands_list[new_pos].command_type
-
-
-        # for item in self.commands_list:
-        #     if item.position_in_sequence == new_pos:
-
-            # if pos:
-            #     command_item.position_in_sequence += 1
-            #     self.playground.move(self.obj_tag, COMMAND_BOX_SIZE, 0)
-
-        print("po")
-        self.print_commands_list()
-        print(old_pos, new_pos)
-        self.playground.update()
-
     def remove_item_from_commands(self):
         for item in self.commands_list:
             if item.command_tag == self.obj_tag:
@@ -254,18 +193,22 @@ class Playground(Tk):
         self.remove_item_from_commands()
 
     def check_buttons(self, event):
+        # is_button = False
         if START_BUTTON_POSITION[0] <= event.x <= START_BUTTON_POSITION[2] and \
                                 START_BUTTON_POSITION[1] <= event.y <= START_BUTTON_POSITION[3]:\
-                self.start_tractor_move()
+            self.start_tractor_move()
+            # print('start click')
+            # is_button = True
         elif RESTART_BUTTON_POSITION[0] <= event.x <= RESTART_BUTTON_POSITION[2] and \
                                 RESTART_BUTTON_POSITION[1] <= event.y <= RESTART_BUTTON_POSITION[3]:\
-                # self.restart()
-            print('restart clilck')
+                print('restart click')
+        #         is_button = True
+        # return is_button
 
     def click(self, event):
         self.check_buttons(event)
         self.obj_id = event.widget.find_closest(event.x, event.y)[0]
-        if self.obj_id:
+        if self.playground.gettags(event.widget.find_closest(event.x, event.y)):
             self.obj_tag = self.playground.gettags(event.widget.find_closest(event.x, event.y))[0]
         if 'collect' in self.obj_tag or 'forward' in self.obj_tag:
             self.playground.lift(self.obj_id)
@@ -277,13 +220,14 @@ class Playground(Tk):
             self.playground.move(self.obj_tag, event.x - self.ex, event.y - self.ey)
             self.ex, self.ey = event.x, event.y
 
-    def check_command_in_list(self):
+    def check_command_in_list(self, pos):
         first_empty_position = None
         for item in self.commands_list:
             if self.obj_id == item.command_id:
                 item.remove_command()
-            if item.command_id is None and first_empty_position is None:
+            if item.command_id is None and (first_empty_position is None or item.position_in_sequence < pos):
                 first_empty_position = item.position_in_sequence
+
         return first_empty_position
 
 
@@ -295,12 +239,10 @@ class Playground(Tk):
                 if command_item.box_coords[0] <= event.x <= command_item.box_coords[2] and \
                                         command_item.box_coords[1] <= event.y <= command_item.box_coords[3]:
 
-                    first_empty_position = self.check_command_in_list()
+                    first_empty_position = self.check_command_in_list(i)
 
                     x, y = command_item.box_coords[0] + COMMAND_BOX_SIZE / 2,\
                            command_item.box_coords[1] + COMMAND_BOX_SIZE / 2
-
-                    condition = i
 
                     if first_empty_position is None:
                         print(first_empty_position)
